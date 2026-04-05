@@ -1,12 +1,47 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import ReactMarkdown from 'react-markdown';
-import { BLOG_POSTS } from '../data/posts';
+import { db } from '../firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { AdPlaceholder } from '../components/AdPlaceholder';
+import { Loader2 } from 'lucide-react';
+
+interface PostData {
+  id: string;
+  title: string;
+  content: string;
+  excerpt: string;
+  date: string;
+  author: string;
+  category: string;
+  readingTime: string;
+  coverImage: string;
+}
 
 export function Post() {
   const { id } = useParams();
-  const post = BLOG_POSTS.find((p) => p.id === id);
+  const [post, setPost] = useState<PostData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPost = async () => {
+      if (!id) return;
+      try {
+        const docRef = doc(db, 'posts', id);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          setPost({ id: docSnap.id, ...docSnap.data() } as PostData);
+        }
+      } catch (error) {
+        console.error('Error fetching post:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchPost();
+  }, [id]);
+
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-zinc-400" /></div>;
 
   if (!post) {
     return (
@@ -16,6 +51,8 @@ export function Post() {
       </div>
     );
   }
+
+  const isHtml = post.content.trim().startsWith('<');
 
   return (
     <article className="space-y-6">
@@ -45,7 +82,11 @@ export function Post() {
       )}
 
       <div className="markdown-body pt-4">
-        <ReactMarkdown>{post.content}</ReactMarkdown>
+        {isHtml ? (
+          <div dangerouslySetInnerHTML={{ __html: post.content }} />
+        ) : (
+          <ReactMarkdown>{post.content}</ReactMarkdown>
+        )}
       </div>
 
       <AdPlaceholder slot="post-bottom" />

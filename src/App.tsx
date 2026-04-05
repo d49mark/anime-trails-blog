@@ -5,6 +5,7 @@ import { Blogs } from './pages/Blogs';
 import { Podcasts } from './pages/Podcasts';
 import { Post } from './pages/Post';
 import { About } from './pages/About';
+import { Admin } from './pages/Admin';
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/podcasts" element={<Podcasts />} />
           <Route path="/post/:id" element={<Post />} />
           <Route path="/about" element={<About />} />
+          <Route path="/admin" element={<Admin />} />
         </Routes>
       </Layout>
     </Router>

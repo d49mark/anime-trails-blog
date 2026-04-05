@@ -1,10 +1,57 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { BLOG_POSTS, PODCAST_EPISODES } from '../data/posts';
+import { db } from '../firebase';
+import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
+import { Loader2 } from 'lucide-react';
+
+interface Post {
+  id: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  category: string;
+  coverImage: string;
+  type: 'blog' | 'podcast';
+  duration?: string;
+}
 
 export function Home() {
-  const latestPosts = BLOG_POSTS.slice(0, 3);
-  const latestEpisode = PODCAST_EPISODES[0];
+  const [latestPosts, setLatestPosts] = useState<Post[]>([]);
+  const [latestEpisode, setLatestEpisode] = useState<Post | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const blogQuery = query(
+          collection(db, 'posts'),
+          where('type', '==', 'blog'),
+          orderBy('date', 'desc'),
+          limit(3)
+        );
+        const blogSnapshot = await getDocs(blogQuery);
+        setLatestPosts(blogSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Post)));
+
+        const podcastQuery = query(
+          collection(db, 'posts'),
+          where('type', '==', 'podcast'),
+          orderBy('date', 'desc'),
+          limit(1)
+        );
+        const podcastSnapshot = await getDocs(podcastQuery);
+        if (!podcastSnapshot.empty) {
+          setLatestEpisode({ id: podcastSnapshot.docs[0].id, ...podcastSnapshot.docs[0].data() } as Post);
+        }
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+  }, []);
+
+  if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin text-zinc-400" /></div>;
 
   return (
     <div className="space-y-16">
