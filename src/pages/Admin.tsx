@@ -4,7 +4,7 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { collection, addDoc, getDocs, query, orderBy, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { Editor } from '../components/Editor';
-import { Plus, LogOut, Trash2, Edit2, Save, X, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { Plus, LogOut, Trash2, Edit2, Save, X, Image as ImageIcon, Loader2, Music } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Post {
@@ -18,6 +18,8 @@ interface Post {
   readingTime: string;
   coverImage: string;
   type: 'blog' | 'podcast';
+  audioUrl?: string;
+  duration?: string;
 }
 
 export function Admin() {
@@ -32,6 +34,7 @@ export function Admin() {
     date: new Date().toISOString().split('T')[0],
   });
   const [saving, setSaving] = useState(false);
+  const [uploadingAudio, setUploadingAudio] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -99,6 +102,30 @@ export function Admin() {
     }
   };
 
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingAudio(true);
+    const storageRef = ref(storage, `podcasts/${Date.now()}-${file.name}`);
+    try {
+      const snapshot = await uploadBytes(storageRef, file);
+      const url = await getDownloadURL(snapshot.ref);
+      
+      // Get duration
+      const audio = new Audio(url);
+      audio.addEventListener('loadedmetadata', () => {
+        const minutes = Math.floor(audio.duration / 60);
+        const seconds = Math.floor(audio.duration % 60);
+        const durationStr = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        setCurrentPost({ ...currentPost, audioUrl: url, duration: durationStr });
+        setUploadingAudio(false);
+      });
+    } catch (error) {
+      console.error('Error uploading audio:', error);
+      setUploadingAudio(false);
+    }
+  };
+
   if (loading) return <div className="flex justify-center py-20"><Loader2 className="animate-spin" /></div>;
 
   if (!user) {
@@ -152,7 +179,7 @@ export function Admin() {
                   </button>
                   <button
                     onClick={handleSave}
-                    disabled={saving}
+                    disabled={saving || uploadingAudio}
                     className="flex items-center space-x-2 px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full font-bold disabled:opacity-50"
                   >
                     {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
@@ -163,7 +190,7 @@ export function Admin() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                 <div className="space-y-4">
-                  <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Title</label>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-500">Title</label>
                   <input
                     type="text"
                     value={currentPost.title || ''}
@@ -173,7 +200,7 @@ export function Admin() {
                   />
                 </div>
                 <div className="space-y-4">
-                  <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Type</label>
+                  <label className="block text-xs font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-500">Type</label>
                   <select
                     value={currentPost.type}
                     onChange={(e) => setCurrentPost({ ...currentPost, type: e.target.value as 'blog' | 'podcast' })}
@@ -185,22 +212,49 @@ export function Admin() {
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Cover Image</label>
-                <div className="flex items-start space-x-4">
-                  {currentPost.coverImage && (
-                    <img src={currentPost.coverImage} className="w-32 h-20 object-cover rounded-lg" />
-                  )}
-                  <label className="flex flex-col items-center justify-center w-32 h-20 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900">
-                    <ImageIcon className="w-6 h-6 text-zinc-400" />
-                    <span className="text-[10px] font-bold uppercase text-zinc-400 mt-1">Upload</span>
-                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
-                  </label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-500">Cover Image</label>
+                  <div className="flex items-start space-x-4">
+                    {currentPost.coverImage && (
+                      <img src={currentPost.coverImage} className="w-32 h-20 object-cover rounded-lg" />
+                    )}
+                    <label className="flex flex-col items-center justify-center w-32 h-20 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                      <ImageIcon className="w-6 h-6 text-zinc-400" />
+                      <span className="text-[10px] font-bold uppercase text-zinc-400 mt-1">Upload</span>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                    </label>
+                  </div>
                 </div>
+
+                {currentPost.type === 'podcast' && (
+                  <div className="space-y-4">
+                    <label className="block text-xs font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-500">Audio File</label>
+                    <div className="flex items-start space-x-4">
+                      {currentPost.audioUrl && (
+                        <div className="flex items-center space-x-2 p-3 bg-zinc-50 dark:bg-zinc-900 rounded-lg border border-zinc-200 dark:border-zinc-800">
+                          <Music className="w-4 h-4 text-accent" />
+                          <span className="text-[10px] font-mono truncate max-w-[100px]">Audio Ready</span>
+                        </div>
+                      )}
+                      <label className="flex flex-col items-center justify-center w-32 h-20 border-2 border-dashed border-zinc-200 dark:border-zinc-800 rounded-lg cursor-pointer hover:bg-zinc-50 dark:hover:bg-zinc-900">
+                        {uploadingAudio ? (
+                          <Loader2 className="w-6 h-6 text-zinc-400 animate-spin" />
+                        ) : (
+                          <Music className="w-6 h-6 text-zinc-400" />
+                        )}
+                        <span className="text-[10px] font-bold uppercase text-zinc-400 mt-1">
+                          {uploadingAudio ? 'Uploading...' : 'Upload Audio'}
+                        </span>
+                        <input type="file" className="hidden" accept="audio/*" onChange={handleAudioUpload} />
+                      </label>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-4">
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Excerpt</label>
+                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-500">Excerpt</label>
                 <textarea
                   value={currentPost.excerpt || ''}
                   onChange={(e) => setCurrentPost({ ...currentPost, excerpt: e.target.value })}
@@ -210,7 +264,7 @@ export function Admin() {
               </div>
 
               <div className="space-y-4">
-                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-500">Content</label>
+                <label className="block text-xs font-bold uppercase tracking-widest text-zinc-800 dark:text-zinc-500">Content</label>
                 <Editor
                   content={currentPost.content || ''}
                   onChange={(content) => setCurrentPost({ ...currentPost, content })}
@@ -228,10 +282,16 @@ export function Admin() {
               <img src={post.coverImage} className="w-16 h-16 object-cover rounded-xl" />
               <div>
                 <h3 className="font-serif font-bold text-lg">{post.title}</h3>
-                <div className="flex items-center space-x-3 text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                <div className="flex items-center space-x-3 text-[10px] font-bold uppercase tracking-widest text-zinc-600 dark:text-zinc-400">
                   <span>{post.date}</span>
                   <span>•</span>
                   <span>{post.type}</span>
+                  {post.duration && (
+                    <>
+                      <span>•</span>
+                      <span>{post.duration}</span>
+                    </>
+                  )}
                 </div>
               </div>
             </div>

@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@custom-variant dark (&:is(.dark *));
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
@@ -11,22 +12,22 @@
 @layer base {
   body {
     font-family: var(--font-sans);
-    @apply bg-white text-black transition-colors duration-200 antialiased;
+    @apply bg-[#f8f8f8] text-zinc-900 transition-colors duration-200 antialiased;
   }
 
   .dark body {
-    @apply bg-zinc-950 text-white;
+    @apply bg-zinc-950 text-zinc-100;
   }
 
   h1, h2, h3, h4 {
     font-family: var(--font-serif);
-    @apply tracking-tight text-black dark:text-white;
+    @apply tracking-tight text-[#0a0a0a] dark:text-zinc-50;
   }
 }
 
 .markdown-body {
   font-family: var(--font-sans);
-  @apply leading-relaxed text-[15px] text-black dark:text-white;
+  @apply leading-relaxed text-[15px] text-[#111111] dark:text-zinc-100;
 }
 
 .markdown-body h1 { 

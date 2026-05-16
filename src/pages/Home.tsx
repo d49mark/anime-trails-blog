@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { db } from '../firebase';
 import { collection, query, orderBy, limit, getDocs, where } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Play, Pause } from 'lucide-react';
+import { usePodcast } from '../context/PodcastContext';
 
 interface Post {
   id: string;
@@ -13,12 +14,15 @@ interface Post {
   coverImage: string;
   type: 'blog' | 'podcast';
   duration?: string;
+  audioUrl?: string;
+  author: string;
 }
 
 export function Home() {
   const [latestPosts, setLatestPosts] = useState<Post[]>([]);
   const [latestEpisode, setLatestEpisode] = useState<Post | null>(null);
   const [loading, setLoading] = useState(true);
+  const { currentEpisode, isPlaying, playEpisode } = usePodcast();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -57,18 +61,18 @@ export function Home() {
     <div className="space-y-16">
       {/* Welcome Section */}
       <section className="space-y-4">
-        <h1 className="text-3xl font-serif font-bold text-black dark:text-white leading-tight">
-          Exploring the deep psychology and meaning within Anime.
+        <h1 className="text-3xl font-serif font-bold text-[#111111] dark:text-white leading-tight">
+          Exploring the deep meaning and depth within Anime.
         </h1>
-        <p className="text-sm text-zinc-600 dark:text-zinc-400 max-w-lg leading-relaxed">
-          Anime Trails is a minimalist space dedicated to analyzing the philosophical layers, character archetypes, and psychological depths of our favorite stories.
+        <p className="text-sm text-zinc-900 dark:text-zinc-400 max-w-lg leading-relaxed">
+          Anime Trails is a minimalist space dedicated to analyzing the philosophical layers, character archetypes, and deep meanings of our favorite stories.
         </p>
       </section>
 
       {/* Latest Blogs */}
       <section className="space-y-8">
         <div className="flex justify-between items-end border-b border-zinc-100 dark:border-zinc-900 pb-4">
-          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400">Latest Blogs</h2>
+          <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500 underline decoration-accent/40 decoration-2 underline-offset-4">Latest Blogs</h2>
           <Link to="/blogs" className="text-[10px] font-bold uppercase tracking-widest text-accent hover:underline">View all</Link>
         </div>
 
@@ -86,17 +90,17 @@ export function Home() {
                 </Link>
               )}
               <div className="space-y-2 flex-grow">
-                <div className="flex items-center space-x-2 text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+                <div className="flex items-center space-x-2 text-[10px] font-bold text-zinc-700 dark:text-zinc-400 uppercase tracking-widest">
                   <span style={{ color: 'var(--color-accent)' }}>{post.category}</span>
                   <span>/</span>
                   <span>{post.date}</span>
                 </div>
                 <Link to={`/post/${post.id}`} className="block group">
-                  <h3 className="text-lg font-serif font-bold text-black dark:text-white group-hover:text-[var(--color-accent)] transition-colors leading-snug">
+                  <h3 className="text-lg font-serif font-bold text-[#0a0a0a] dark:text-white group-hover:text-[var(--color-accent)] transition-colors leading-snug">
                     {post.title}
                   </h3>
                 </Link>
-                <p className="text-[13px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+                <p className="text-[13px] text-zinc-900 dark:text-zinc-400 line-clamp-2 leading-relaxed">
                   {post.excerpt}
                 </p>
               </div>
@@ -109,32 +113,47 @@ export function Home() {
       {latestEpisode && (
         <section className="space-y-8">
           <div className="flex justify-between items-end border-b border-zinc-100 dark:border-zinc-900 pb-4">
-            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-400">Latest Podcast</h2>
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-zinc-500 underline decoration-accent/40 decoration-2 underline-offset-4">Latest Podcast</h2>
             <Link to="/podcasts" className="text-[10px] font-bold uppercase tracking-widest text-accent hover:underline">Listen all</Link>
           </div>
 
           <article className="py-8 first:pt-0 flex flex-col sm:flex-row gap-6 items-start group">
-            <div className="w-full sm:w-32 md:w-40 shrink-0 aspect-[4/3] overflow-hidden rounded-sm bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 relative">
+            <div 
+              className="w-full sm:w-32 md:w-40 shrink-0 aspect-[4/3] overflow-hidden rounded-sm bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 relative cursor-pointer"
+              onClick={() => playEpisode(latestEpisode)}
+            >
               <img
                 src={latestEpisode.coverImage}
                 alt={latestEpisode.title}
                 className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
                 referrerPolicy="no-referrer"
               />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                  {currentEpisode?.id === latestEpisode.id && isPlaying ? (
+                    <Pause className="w-5 h-5 text-black" />
+                  ) : (
+                    <Play className="w-5 h-5 text-black ml-1" />
+                  )}
+                </div>
+              </div>
               <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[8px] px-1.5 py-0.5 rounded-sm font-mono">
                 {latestEpisode.duration}
               </div>
             </div>
             <div className="space-y-2 flex-grow">
-              <div className="flex items-center space-x-2 text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+              <div className="flex items-center space-x-2 text-[10px] font-bold text-zinc-700 dark:text-zinc-400 uppercase tracking-widest">
                 <span style={{ color: 'var(--color-accent)' }}>Podcast</span>
                 <span>/</span>
                 <span>{latestEpisode.date}</span>
               </div>
-              <h3 className="text-lg font-serif font-bold text-black dark:text-white group-hover:text-[var(--color-accent)] transition-colors leading-snug cursor-pointer">
+              <h3 
+                className="text-lg font-serif font-bold text-[#0a0a0a] dark:text-white group-hover:text-[var(--color-accent)] transition-colors leading-snug cursor-pointer"
+                onClick={() => playEpisode(latestEpisode)}
+              >
                 {latestEpisode.title}
               </h3>
-              <p className="text-[13px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+              <p className="text-[13px] text-zinc-900 dark:text-zinc-400 line-clamp-2 leading-relaxed">
                 {latestEpisode.excerpt}
               </p>
             </div>

@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../firebase';
 import { collection, query, orderBy, getDocs, where } from 'firebase/firestore';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Play, Pause } from 'lucide-react';
+import { usePodcast } from '../context/PodcastContext';
 
 interface Episode {
   id: string;
@@ -11,11 +12,13 @@ interface Episode {
   author: string;
   coverImage: string;
   duration?: string;
+  audioUrl?: string;
 }
 
 export function Podcasts() {
   const [episodes, setEpisodes] = useState<Episode[]>([]);
   const [loading, setLoading] = useState(true);
+  const { currentEpisode, isPlaying, playEpisode } = usePodcast();
 
   useEffect(() => {
     const fetchEpisodes = async () => {
@@ -47,34 +50,53 @@ export function Podcasts() {
       <div className="divide-y divide-zinc-100 dark:divide-zinc-900">
         {episodes.map((episode) => (
           <article key={episode.id} className="py-8 first:pt-0 flex flex-col sm:flex-row gap-6 items-start group">
-            <div className="w-full sm:w-32 md:w-40 shrink-0 aspect-[4/3] overflow-hidden rounded-sm bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 relative">
+            <div 
+              className="w-full sm:w-32 md:w-40 shrink-0 aspect-[4/3] overflow-hidden rounded-sm bg-zinc-100 dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 relative cursor-pointer"
+              onClick={() => playEpisode(episode)}
+            >
               <img
                 src={episode.coverImage}
                 alt={episode.title}
                 className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity duration-300"
                 referrerPolicy="no-referrer"
               />
+              <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-black/20">
+                <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                  {currentEpisode?.id === episode.id && isPlaying ? (
+                    <Pause className="w-5 h-5 text-black" />
+                  ) : (
+                    <Play className="w-5 h-5 text-black ml-1" />
+                  )}
+                </div>
+              </div>
               <div className="absolute bottom-1 right-1 bg-black/70 text-white text-[8px] px-1.5 py-0.5 rounded-sm font-mono">
                 {episode.duration}
               </div>
             </div>
             <div className="space-y-2 flex-grow">
-              <div className="flex items-center space-x-2 text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+              <div className="flex items-center space-x-2 text-[10px] font-bold text-zinc-700 dark:text-zinc-400 uppercase tracking-widest">
                 <span style={{ color: 'var(--color-accent)' }}>Podcast</span>
                 <span>/</span>
                 <span>{episode.date}</span>
               </div>
-              <h2 className="text-lg font-serif font-bold text-black dark:text-white group-hover:text-[var(--color-accent)] transition-colors leading-snug cursor-pointer">
+              <h2 
+                className="text-lg font-serif font-bold text-[#0a0a0a] dark:text-white group-hover:text-[var(--color-accent)] transition-colors leading-snug cursor-pointer"
+                onClick={() => playEpisode(episode)}
+              >
                 {episode.title}
               </h2>
-              <p className="text-[13px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+              <p className="text-[13px] text-zinc-900 dark:text-zinc-400 line-clamp-2 leading-relaxed">
                 {episode.excerpt}
               </p>
               <div className="flex items-center space-x-3 pt-1">
-                <button className="text-[11px] font-bold uppercase tracking-tighter hover:underline underline-offset-2" style={{ color: 'var(--color-accent)' }}>
-                  Listen Now
+                <button 
+                  onClick={() => playEpisode(episode)}
+                  className="text-[11px] font-bold uppercase tracking-tighter hover:underline underline-offset-2" 
+                  style={{ color: 'var(--color-accent)' }}
+                >
+                  {currentEpisode?.id === episode.id && isPlaying ? 'Pause Now' : 'Listen Now'}
                 </button>
-                <span className="text-[11px] font-medium text-zinc-400 italic">Hosted by {episode.author}</span>
+                <span className="text-[11px] font-medium text-zinc-700 dark:text-zinc-400 italic">Hosted by {episode.author}</span>
               </div>
             </div>
           </article>

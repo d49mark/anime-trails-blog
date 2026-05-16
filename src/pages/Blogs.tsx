@@ -58,17 +58,17 @@ export function Blogs() {
               </Link>
             )}
             <div className="space-y-2 flex-grow">
-              <div className="flex items-center space-x-2 text-[10px] font-bold text-zinc-500 dark:text-zinc-400 uppercase tracking-widest">
+              <div className="flex items-center space-x-2 text-[10px] font-bold text-zinc-700 dark:text-zinc-400 uppercase tracking-widest">
                 <span style={{ color: 'var(--color-accent)' }}>{post.category}</span>
                 <span>/</span>
                 <span>{post.date}</span>
               </div>
               <Link to={`/post/${post.id}`} className="block group">
-                <h2 className="text-lg font-serif font-bold text-black dark:text-white group-hover:text-[var(--color-accent)] transition-colors leading-snug">
+                <h2 className="text-lg font-serif font-bold text-[#0a0a0a] dark:text-white group-hover:text-[var(--color-accent)] transition-colors leading-snug">
                   {post.title}
                 </h2>
               </Link>
-              <p className="text-[13px] text-zinc-600 dark:text-zinc-400 line-clamp-2 leading-relaxed">
+              <p className="text-[13px] text-zinc-900 dark:text-zinc-400 line-clamp-2 leading-relaxed">
                 {post.excerpt}
               </p>
               <Link to={`/post/${post.id}`} className="inline-block text-[11px] font-bold uppercase tracking-tighter hover:underline underline-offset-2" style={{ color: 'var(--color-accent)' }}>

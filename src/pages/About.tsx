@@ -4,7 +4,7 @@ export function About() {
   return (
     <div className="space-y-8">
       <h1 className="text-xl font-serif font-bold">About Anime Trails</h1>
-      <div className="space-y-4 text-sm text-zinc-600 dark:text-zinc-400 leading-relaxed">
+      <div className="space-y-4 text-sm text-zinc-900 dark:text-zinc-400 leading-relaxed">
         <p>
           Anime Trails is a minimalist space dedicated to the psychological and philosophical exploration of anime.
         </p>

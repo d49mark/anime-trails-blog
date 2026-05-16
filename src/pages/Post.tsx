@@ -59,13 +59,13 @@ export function Post() {
       <header className="space-y-3">
         <div className="flex items-center space-x-2 text-[10px] font-bold uppercase tracking-widest">
           <span style={{ color: 'var(--color-accent)' }}>{post.category}</span>
-          <span className="text-zinc-300 dark:text-zinc-700">/</span>
-          <span className="text-zinc-500 dark:text-zinc-400">{post.date}</span>
+          <span className="text-zinc-500 dark:text-zinc-700">/</span>
+          <span className="text-zinc-700 dark:text-zinc-400">{post.date}</span>
         </div>
-        <h1 className="text-2xl md:text-3xl font-serif font-bold text-black dark:text-white leading-tight">
+        <h1 className="text-2xl md:text-3xl font-serif font-bold text-[#0a0a0a] dark:text-white leading-tight">
           {post.title}
         </h1>
-        <div className="text-[11px] text-zinc-500 dark:text-zinc-400 font-medium italic border-l-2 pl-3" style={{ borderLeftColor: 'var(--color-accent)' }}>
+        <div className="text-[11px] text-zinc-800 dark:text-zinc-400 font-medium italic border-l-2 pl-3" style={{ borderLeftColor: 'var(--color-accent)' }}>
           Written by {post.author} • {post.readingTime}
         </div>
       </header>
